@@ -1,1 +1,1 @@
-# cs230-project-coffee-quality
+# cs230-project-coffee-leaf-disease
