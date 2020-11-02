@@ -1,8 +1,10 @@
 import openpyxl
 import collections
 import os
-from shutil import copyfile
+from PIL import Image
 import random
+
+SIZE = 300
 
 xlsx_path = "./Annotations/RoCoLe-classes.xlsx"
 photo_path_prefix = "./Photos/"
@@ -86,6 +88,13 @@ def get_split(img, split_dict):
         return "val"
     return "train"
 
+def resize_and_save(filename, output_path, size=SIZE):
+    """Resize the image contained in `filename` and save it to the `output_dir`"""
+    image = Image.open(filename)
+    # Use bilinear interpolation instead of the default "nearest neighbor" method
+    image = image.resize((size, size), Image.BILINEAR)
+    image.save(output_path)
+
 
 def copy_photo_files_into_directories(classification_dict, new_classification_path, classification_type, split_dict):
     for (category, images) in classification_dict.items():
@@ -94,7 +103,8 @@ def copy_photo_files_into_directories(classification_dict, new_classification_pa
             make_dir(os.path.join(new_classification_path, split))
             img_name_prefix = classification_type[category]
             new_img_name = str(img_name_prefix) + "_" + img
-            copyfile(os.path.join(photo_path_prefix, img), os.path.join(new_classification_path, split, new_img_name))
+            new_img_path = os.path.join(new_classification_path, split, new_img_name)
+            resize_and_save(os.path.join(photo_path_prefix, img), new_img_path)
 
 
 def categorize_train_val_test_split(verbose = False):
