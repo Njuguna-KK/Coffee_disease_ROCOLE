@@ -4,7 +4,7 @@ import os
 from PIL import Image
 import random
 
-SIZE = 300
+SIZE = 720
 
 xlsx_path = "./Annotations/RoCoLe-classes.xlsx"
 photo_path_prefix = "./Photos/"
