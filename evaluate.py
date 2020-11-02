@@ -8,20 +8,19 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import utils
-import model.net as net
+import model.cnn as net
 import model.data_loader as data_loader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data/64x64_SIGNS',
                     help="Directory containing the dataset")
 parser.add_argument('--model_dir', default='experiments/base_model',
-                    help="Directory containing params.json")
+                    help="Directory containing cnn_params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 
 
 def evaluate(model, loss_fn, dataloader, metrics, params):
-    print("evluate 24")
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -35,14 +34,12 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
 
     # set model to evaluation mode
     model.eval()
-    print("evluate 38")
 
     # summary for current eval loop
     summ = []
 
     # compute metrics over the dataset
     for data_batch, labels_batch in dataloader:
-        print("evaluate 44")
         # move to GPU if available
         if params.cuda:
             data_batch, labels_batch = data_batch.cuda(
@@ -79,7 +76,7 @@ if __name__ == '__main__':
     """
     # Load the parameters
     args = parser.parse_args()
-    json_path = os.path.join(args.model_dir, 'params.json')
+    json_path = os.path.join(args.model_dir, 'cnn_params.json')
     assert os.path.isfile(
         json_path), "No json configuration file found at {}".format(json_path)
     params = utils.Params(json_path)

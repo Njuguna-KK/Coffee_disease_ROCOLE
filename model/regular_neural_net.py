@@ -18,6 +18,7 @@ class Net(nn.Module):
         self.img_dimension = params.img_dimension
         self.first_hidden_size = params.first_hidden_size
         self.second_hidden_size = params.second_hidden_size
+        self.third_hidden_size = params.third_hidden_size
         self.depth = params.depth
         self.batch_size = params.batch_size
 
@@ -25,7 +26,9 @@ class Net(nn.Module):
         self.relu = nn.ReLU()
         self.linear2 = nn.Linear(self.first_hidden_size, self.second_hidden_size)
         self.relu = nn.ReLU()
-        self.linear3 = nn.Linear(self.second_hidden_size, self.num_classes)
+        self.linear3 = nn.Linear(self.second_hidden_size, self.third_hidden_size)
+        self.relu = nn.ReLU()
+        self.linear4 = nn.Linear(self.third_hidden_size, self.num_classes)
 
     def forward(self, x):
         num_examples = x.shape[0]
@@ -35,9 +38,9 @@ class Net(nn.Module):
         out = self.linear2(out)
         out = self.relu(out)
         out = self.linear3(out)
+        out = self.relu(out)
+        out = self.linear4(out)
 
-        # apply log softmax on each image's output (this is recommended over applying softmax
-        # since it is numerically more stable)
         return out
 
 def loss_fn(outputs, labels):

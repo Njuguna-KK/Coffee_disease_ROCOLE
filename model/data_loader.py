@@ -7,17 +7,6 @@ import torchvision.transforms as transforms
 
 # borrowed from http://pytorch.org/tutorials/advanced/neural_style_tutorial.html
 # and http://pytorch.org/tutorials/beginner/data_loading_tutorial.html
-# define a training image loader that specifies transforms on images. See documentation for more details.
-train_transformer = transforms.Compose([
-    # transforms.Resize(64),  # resize the image to 64x64 (remove if images are already 64x64)
-    # transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
-    transforms.ToTensor()])  # transform it into a torch tensor
-
-# loader for evaluation, no horizontal flip
-eval_transformer = transforms.Compose([
-    # transforms.Resize(64),  # resize the image to 64x64 (remove if images are already 64x64)
-    transforms.ToTensor()])  # transform it into a torch tensor
-
 
 class LeafDataset(Dataset):
     """
@@ -56,6 +45,22 @@ class LeafDataset(Dataset):
         image = self.transform(image)
         return image, self.labels[idx]
 
+def get_transformer(size):
+    # define a training image loader that specifies transforms on images. See documentation for more details.
+    train_transformer = transforms.Compose([
+        transforms.CenterCrop(size * 2),
+        transforms.Pad(10),
+        transforms.Resize(size),
+        transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
+        transforms.ToTensor()])  # transform it into a torch tensor
+
+    # loader for evaluation, no horizontal flip
+    eval_transformer = transforms.Compose([
+        transforms.CenterCrop(size * 2),
+        transforms.Pad(10),
+        transforms.Resize(size),  # resize the image to 64x64 (remove if images are already 64x64)
+        transforms.ToTensor()])  # transform it into a torch tensor
+    return train_transformer, eval_transformer
 
 def fetch_dataloader(types, data_dir, params):
     """
@@ -69,8 +74,10 @@ def fetch_dataloader(types, data_dir, params):
     Returns:
         data: (dict) contains the DataLoader object for each type in types
     """
+    img_dimension = params.img_dimension
     dataloaders = {}
 
+    train_transformer, eval_transformer = get_transformer(img_dimension)
     for split in ['train', 'val', 'test']:
         if split in types:
             path = os.path.join(data_dir, split)

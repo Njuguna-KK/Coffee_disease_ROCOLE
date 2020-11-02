@@ -3,7 +3,7 @@
 import argparse
 import logging
 import os
-
+import torchvision.models as models
 import numpy as np
 import torch
 import torch.optim as optim
@@ -11,16 +11,18 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 import utils
-# import model.net as net
-import model.neural_net as net
+import model.regular_neural_net as regular_nn
+import model.cnn as cnn
 import model.data_loader as data_loader
 from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='data/64x64_SIGNS',
+parser.add_argument('--data_dir', default='multiclass',
                     help="Directory containing the dataset")
 parser.add_argument('--model_dir', default='experiments/base_model',
-                    help="Directory containing params.json")
+                    help="Directory containing cnn_params.json")
+parser.add_argument('--param_name', default='cnn',
+                    help="Which params.jon file to use")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
@@ -126,7 +128,6 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # compute number of batches in one epoch (one full pass over the training set)
         train(model, optimizer, loss_fn, train_dataloader, metrics, params)
 
-        print("train and evaluate 129")
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params)
 
@@ -155,12 +156,15 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             model_dir, "metrics_val_last_weights.json")
         utils.save_dict_to_json(val_metrics, last_json_path)
 
+def get_params_path(args):
+    param_name = args.param_name
+    return param_name + "_params.json"
+
 
 if __name__ == '__main__':
-
     # Load the parameters from json file
     args = parser.parse_args()
-    json_path = os.path.join(args.model_dir, 'params.json')
+    json_path = os.path.join(args.model_dir, get_params_path(args))
     assert os.path.isfile(
         json_path), "No json configuration file found at {}".format(json_path)
     params = utils.Params(json_path)
@@ -187,8 +191,12 @@ if __name__ == '__main__':
 
     logging.info("- done.")
 
-    # Define the model and optimizer
+    net = regular_nn if args.param_name == "nn" else cnn
+
+    # Use later, to customize AlexNet
     model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    # model = models.alexnet()
+
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
