@@ -38,19 +38,19 @@ class Net(nn.Module):
         # each of the convolution layers below have the arguments (input_channels, output_channels, filter_size,
         # stride, padding). We also include batch normalisation layers that help stabilise training.
         # For more details on how to use these layers, check out the documentation.
-        self.conv0 = nn.Conv2d(3, 96, 11, stride=4, padding=2)
-        self.bn0 = nn.BatchNorm2d(96)
+        self.conv0 = nn.Conv2d(3, 24, 11, stride=4, padding=2)
+        self.bn0 = nn.BatchNorm2d(24)
         self.pool0 = nn.MaxPool2d(2, stride=2)
 
-        self.conv1 = nn.Conv2d(96, 42, 5, stride=2, padding=2)
+        self.conv1 = nn.Conv2d(24, 42, 5, stride=1, padding=2)
         self.bn1 = nn.BatchNorm2d(42)
         self.pool1 = nn.MaxPool2d(2, stride=2)
 
-        self.conv2 = nn.Conv2d(42, 74, 3, stride=1, padding=2)
+        self.conv2 = nn.Conv2d(42, 74, 3, stride=1, padding=1)
         self.bn2 = nn.BatchNorm2d(74)
         self.pool2 = nn.MaxPool2d(2, stride=2)
 
-        self.conv3 = nn.Conv2d(74, 148, 3, stride=1, padding=2)
+        self.conv3 = nn.Conv2d(74, 148, 3, stride=1, padding=1)
         self.bn3 = nn.BatchNorm2d(148)
         self.pool3 = nn.MaxPool2d(2, stride=2)
 
@@ -71,22 +71,29 @@ class Net(nn.Module):
 
         Note: the dimensions after each step are provided
         """
-        s = self.bn0(self.conv0(s))
-        s = F.relu(self.pool0(s))
+        s = self.conv0(s)
+        s = self.bn0(s)
+        s = self.pool0(s)
+        s = F.relu(s)
 
-        s = self.bn1(self.conv1(s))
+        s = self.conv1(s)
+        s = self.bn1(s)
         s = self.pool1(s)
         s = F.relu(s)
 
-        s = self.bn2(self.conv2(s))
-        s = F.relu(self.pool2(s))
-
-        s = self.bn3(self.conv3(s))
-        s = F.relu(self.pool3(s))
+        s = self.conv2(s)
+        s = self.bn2(s)
+        s = self.pool2(s)
+        s = F.relu(s)
+        s = self.conv3(s)
+        s = self.bn3(s)
+        s = self.pool3(s)
+        s = F.relu(s)
 
         # flatten the output for each image
         s = s.view(-1, 1332)
 
+        # print(s.shape)
         s = F.relu(self.fc1(s))
         s = F.dropout(F.relu(self.fc2(s)),
                       p=self.dropout_rate, training=self.training)

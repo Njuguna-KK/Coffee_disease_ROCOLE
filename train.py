@@ -50,6 +50,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
 
     # Use tqdm for progress bar
     with tqdm(total=len(dataloader)) as t:
+        tp_fp_fn = [[0, 0, 0] for _ in range(params.num_classes)]
         for i, (train_batch, labels_batch) in enumerate(dataloader):
 
             # move to GPU if available
@@ -64,6 +65,13 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             output_batch = model(train_batch)
             loss = loss_fn(output_batch, labels_batch)
 
+            output_batch_np = output_batch.data.cpu().numpy()
+            labels_batch_np = labels_batch.data.cpu().numpy()
+            softmax_output = utils.softmax(output_batch_np)
+            predicted_labels_batch = utils.one_hot_normal_encoding(softmax_output)
+            tp_fp_fn = utils.get_tp_fp_fn(predicted_labels_batch, labels_batch_np, params.num_classes, tp_fp_fn)
+
+
             # clear previous gradients, compute gradients of all variables wrt loss
             optimizer.zero_grad()
             loss.backward()
@@ -72,7 +80,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             optimizer.step()
 
             # Evaluate summaries only once in a while
-            if i % params.save_summary_steps == 0:
+            if i % params.save_summary_steps == 2:
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
                 output_batch = output_batch.data.cpu().numpy()
                 labels_batch = labels_batch.data.cpu().numpy()
@@ -88,6 +96,14 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
 
             t.set_postfix(loss='{:05.3f}'.format(loss_avg()))
             t.update()
+
+        precisions_recall_f1 = utils.compute_precision_recall(tp_fp_fn)
+        precisions = np.array(precisions_recall_f1)[:, 0]
+        recalls = np.array(precisions_recall_f1)[:, 1]
+        avg_prec = np.mean(precisions)
+        avg_recall = np.mean(recalls)
+        f1_avg = 2 * avg_prec * avg_recall / (avg_prec + avg_recall)
+        print("Train Average F1 Score : {}".format(f1_avg))
 
     # compute mean of all metrics in summary
     metrics_mean = {metric: np.mean([x[metric]
