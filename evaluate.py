@@ -12,10 +12,10 @@ import model.cnn as net
 import model.data_loader as data_loader
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='data/64x64_SIGNS',
+parser.add_argument('--data_dir', default='just_splitted/multiclass',
                     help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='experiments/base_model',
-                    help="Directory containing cnn_params.json")
+parser.add_argument('--model_dir', default='experiments/custom_alexnet',
+                    help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     """
     # Load the parameters
     args = parser.parse_args()
-    json_path = os.path.join(args.model_dir, 'cnn_params.json')
+    json_path = os.path.join(args.model_dir, 'params.json')
     assert os.path.isfile(
         json_path), "No json configuration file found at {}".format(json_path)
     params = utils.Params(json_path)
