@@ -17,10 +17,10 @@ import model.data_loader as data_loader
 from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='multiclass',
+parser.add_argument('--data_dir', default='just_splitted/multiclass',
                     help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='experiments/base_model',
-                    help="Directory containing cnn_params.json")
+parser.add_argument('--model_dir', default='experiments/custom_alexnet',
+                    help="Directory containing params.json")
 parser.add_argument('--param_name', default='cnn',
                     help="Which params.jon file to use")
 parser.add_argument('--restore_file', default=None,
@@ -52,7 +52,6 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
     with tqdm(total=len(dataloader)) as t:
         tp_fp_fn = [[0, 0, 0] for _ in range(params.num_classes)]
         for i, (train_batch, labels_batch) in enumerate(dataloader):
-
             # move to GPU if available
             if params.cuda:
                 train_batch, labels_batch = train_batch.cuda(
@@ -172,15 +171,11 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             model_dir, "metrics_val_last_weights.json")
         utils.save_dict_to_json(val_metrics, last_json_path)
 
-def get_params_path(args):
-    param_name = args.param_name
-    return param_name + "_params.json"
-
 
 if __name__ == '__main__':
     # Load the parameters from json file
     args = parser.parse_args()
-    json_path = os.path.join(args.model_dir, get_params_path(args))
+    json_path = os.path.join(args.model_dir, "params.json")
     assert os.path.isfile(
         json_path), "No json configuration file found at {}".format(json_path)
     params = utils.Params(json_path)
@@ -210,8 +205,10 @@ if __name__ == '__main__':
     net = regular_nn if args.param_name == "nn" else cnn
 
     # Use later, to customize AlexNet
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
-    # model = models.alexnet()
+    # model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    # model = models.alexnet(pretrained=True)
+    model = models.resnet18(pretrained=True)
+    # model = models.resnext50_32x4d(pretrained=True)
 
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
