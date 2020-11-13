@@ -52,7 +52,6 @@ def get_transformer(size):
     # define a training image loader that specifies transforms on images. See documentation for more details.
     train_transformer = transforms.Compose([
         transforms.CenterCrop(size * 2),
-        transforms.RandomCrop(int(size * 1.5)),
         transforms.Pad(10),
         transforms.Resize(size),
         transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
@@ -62,7 +61,6 @@ def get_transformer(size):
     # loader for evaluation, no horizontal flip
     eval_transformer = transforms.Compose([
         transforms.CenterCrop(size * 2),
-        transforms.RandomCrop(int(size * 1.5)),
         transforms.Pad(10),
         transforms.Resize(size),  # resize the image to 64x64 (remove if images are already 64x64)
         transforms.ToTensor(),

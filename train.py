@@ -206,8 +206,8 @@ if __name__ == '__main__':
 
     # Use later, to customize AlexNet
     # model = net.Net(params).cuda() if params.cuda else net.Net(params)
-    # model = models.alexnet(pretrained=True)
-    model = models.resnet18(pretrained=True)
+    model = models.alexnet(pretrained=True)
+    # model = models.resnet18(pretrained=True)
     # model = models.resnext50_32x4d(pretrained=True)
 
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
