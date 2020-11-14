@@ -23,10 +23,13 @@ class Regression_Adopted_NN(nn.Module):
     def __init__(self, params):
         super(Regression_Adopted_NN, self).__init__()
         self.pretrained = pretrained_map[params.which_net]
+        self.dropout_rate = params.dropout_rate if hasattr(params, 'dropout_rate') else 0.0
         self.my_new_layers = nn.Sequential(nn.Linear(self.get_num_outputs(params), 100, bias=True),
                                            nn.ReLU(),
+                                           nn.Dropout(p=self.dropout_rate),
                                            nn.Linear(100, 25, bias=True),
                                            nn.ReLU(),
+                                           nn.Dropout(p=self.dropout_rate),
                                            nn.Linear(25, 1, bias=True))
 
 
