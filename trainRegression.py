@@ -11,18 +11,15 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 import utils
-import model.regular_neural_net as regular_nn
-import model.cnn as cnn
+import model.regression_adopted_cnn as cnn
 import model.data_loader as data_loader
 from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='just_splitted/multiclass',
+parser.add_argument('--data_dir', default='regression/multiclass',
                     help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='experiments/custom_alexnet',
+parser.add_argument('--model_dir', default='random',
                     help="Directory containing params.json")
-parser.add_argument('--param_name', default='cnn',
-                    help="Which params.jon file to use")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
@@ -202,18 +199,15 @@ if __name__ == '__main__':
 
     logging.info("- done.")
 
-    net = regular_nn if args.param_name == "nn" else cnn
 
     # Use later, to customize AlexNet
-    # model = net.Net(params).cuda() if params.cuda else net.Net(params)
-    model = models.alexnet(pretrained=True)
-    # model = models.resnet18(pretrained=True)
-    # model = models.resnext50_32x4d(pretrained=True)
+    model = cnn.Regression_Adopted_NN(params).cuda() if params.cuda else cnn.Regression_Adopted_NN(params)
+
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
-    loss_fn = net.loss_fn
-    metrics = net.metrics
+    loss_fn = cnn.loss_fn
+    metrics = cnn.metrics
 
     # Train the model
     logging.info("Starting training for {} epoch(s)".format(params.num_epochs))
