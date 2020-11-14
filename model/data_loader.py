@@ -105,7 +105,7 @@ def fetch_dataloader(types, data_dir, params):
                 weighted_sampler = get_batched_weighted_sampler(params, train_dataset)
                 dl = DataLoader(train_dataset,
                                         num_workers=params.num_workers, batch_size=params.batch_size, shuffle=True,
-                                        pin_memory=params.cuda) #, batch_sampler=weighted_sampler)
+                                        pin_memory=params.cuda)# batch_sampler=weighted_sampler)
             else:
                 dl = DataLoader(LeafDataset(path, eval_transformer), batch_size=params.batch_size, shuffle=False,
                                 num_workers=params.num_workers,
