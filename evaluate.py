@@ -54,10 +54,7 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
 
         # extract data from torch Variable, move to cpu, convert to numpy arrays
         output_batch = output_batch.data.cpu().numpy()
-        softmax_output = utils.softmax(output_batch)
-        predicted_labels_batch = utils.one_hot_normal_encoding(softmax_output)
         labels_batch = labels_batch.data.cpu().numpy()
-        tp_fp_fn = utils.get_tp_fp_fn(predicted_labels_batch, labels_batch, params.num_classes, tp_fp_fn)
 
         # compute all metrics on this batch
         summary_batch = {metric: metrics[metric](output_batch, labels_batch)
@@ -65,13 +62,6 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
         summary_batch['loss'] = loss.item()
         summ.append(summary_batch)
 
-    precisions_recall_f1 = utils.compute_precision_recall(tp_fp_fn)
-    precisions = np.array(precisions_recall_f1)[:, 0]
-    recalls = np.array(precisions_recall_f1)[:, 1]
-    avg_prec = np.mean(precisions)
-    avg_recall = np.mean(recalls)
-    f1_avg = 2 * avg_prec * avg_recall / (avg_prec + avg_recall)
-    print("Validation Average F1 Score : {}".format(f1_avg))
     # compute mean of all metrics in summary
     metrics_mean = {metric: np.mean([x[metric]
                                      for x in summ]) for metric in summ[0]}
