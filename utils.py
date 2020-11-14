@@ -5,30 +5,13 @@ import shutil
 import numpy as np
 
 import torch
+from sklearn import metrics as sklearn_metrics
 
-def softmax(x):
-    return np.exp(x) / np.sum(np.exp(x), axis=0)
 
-def one_hot_normal_encoding(output_batch):
-    return np.argmax(output_batch, axis=1)
-
-def get_tp_fp_fn(predicted, actual, num_classes, current):
-    result = []
-    for i in range(num_classes):
-        tp = np.sum(np.where(actual == i, 1, 0) * np.where(actual == predicted, 1, 0))
-        fp = np.sum(np.where(actual != i, 1, 0) * np.where(predicted == i, 1, 0))
-        fn = np.sum(np.where(actual == i, 1, 0) * np.where(predicted != actual, 1, 0))
-        result.append([tp + current[i][0], fp + current[i][1], fn + current[i][2]])
-    return result
-
-def compute_precision_recall(tp_fp_fn):
-    result = []
-    for i in range(len(tp_fp_fn)):
-        precision = tp_fp_fn[i][0] / (tp_fp_fn[i][0] + tp_fp_fn[i][1])
-        recall = tp_fp_fn[i][0] / (tp_fp_fn[i][0] + tp_fp_fn[i][2])
-        f1 = 2 * precision * recall / (precision + recall)
-        result.append([precision, recall, f1])
-    return result
+def f1_metrics(outputs, labels):
+    confusion_matrix = sklearn_metrics.confusion_matrix(labels, outputs)
+    classification_report = sklearn_metrics.classification_report(labels, outputs, digits=3)
+    return confusion_matrix, classification_report
 
 class Params():
     """Class that loads hyperparameters from a json file.

@@ -37,7 +37,6 @@ class Regression_Adopted_NN(nn.Module):
 
 
 def loss_fn(outputs, labels):
-
     outputs = torch.flatten(outputs.type(torch.DoubleTensor))
     labels = labels.type(torch.DoubleTensor)
     criterion = nn.MSELoss()
