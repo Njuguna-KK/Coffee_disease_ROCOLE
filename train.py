@@ -75,7 +75,13 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
                 output_batch = output_batch.data.cpu().numpy()
                 labels_batch = labels_batch.data.cpu().numpy()
-
+                is0 = np.sum(np.where(labels_batch == 0, 1, 0))
+                is1 = np.sum(np.where(labels_batch == 1, 1, 0))
+                is2 = np.sum(np.where(labels_batch == 2, 1, 0))
+                is3 = np.sum(np.where(labels_batch == 3, 1, 0))
+                is4 = np.sum(np.where(labels_batch == 4, 1, 0))
+                is5 = np.sum(np.where(labels_batch == 5, 1, 0))
+                print(is0, is1, is2, is3, is4, is5)
                 # compute all metrics on this batch
                 summary_batch = {metric: metrics[metric](output_batch, labels_batch)
                                  for metric in metrics}
@@ -190,7 +196,7 @@ if __name__ == '__main__':
 
     # Use later, to customize AlexNet
     # model = net.Net(params).cuda() if params.cuda else net.Net(params)
-    model = models.alexnet(pretrained=True)
+    model = models.alexnet()
     # model = models.resnet18(pretrained=True)
     # model = models.resnext50_32x4d(pretrained=True)
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)

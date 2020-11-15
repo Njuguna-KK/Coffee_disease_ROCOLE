@@ -23,6 +23,10 @@ parser.add_argument('--restore_file', default='best', help="name of the file in 
                      containing weights to load")
 parser.add_argument('--net',
                     help="Which neural net to use")
+parser.add_argument('--testSet', default=False,
+                    help="Indicate whether we should get the metrics for the test set.")
+parser.add_argument('--trainAndVal', default=True,
+                    help="Indicate whether we should get the metrics for the test set.")
 
 pretrained_map = {
     "alexnet": models.alexnet(pretrained=True),
@@ -161,17 +165,26 @@ if __name__ == '__main__':
         args.model_dir, args.restore_file + '.pth.tar'), model)
 
     # Evaluate Train
-    confus_save_path = os.path.join(
-        args.model_dir, "confus_f1_train_{}.json".format(args.restore_file))
-    train_metrics = evaluate(model, loss_fn, train_dl, metrics, params, 'Train', confus_save_path, args)
-    save_path = os.path.join(
-        args.model_dir, "metrics_train_{}.json".format(args.restore_file))
-    utils.save_dict_to_json(train_metrics, save_path)
+    if args.trainAndVal == "True":
+        confus_save_path = os.path.join(
+            args.model_dir, "confus_f1_train_{}.json".format(args.restore_file))
+        train_metrics = evaluate(model, loss_fn, train_dl, metrics, params, 'Train', confus_save_path, args)
+        save_path = os.path.join(
+            args.model_dir, "metrics_train_{}.json".format(args.restore_file))
+        utils.save_dict_to_json(train_metrics, save_path)
 
-    # Evaluate Validation
-    confus_save_path = os.path.join(
-        args.model_dir, "confus_f1_val_{}.json".format(args.restore_file))
-    val_metrics = evaluate(model, loss_fn, val_dl, metrics, params, 'Val', confus_save_path, args)
-    save_path = os.path.join(
-        args.model_dir, "metrics_val_{}.json".format(args.restore_file))
-    utils.save_dict_to_json(val_metrics, save_path)
+        # Evaluate Validation
+        confus_save_path = os.path.join(
+            args.model_dir, "confus_f1_val_{}.json".format(args.restore_file))
+        val_metrics = evaluate(model, loss_fn, val_dl, metrics, params, 'Val', confus_save_path, args)
+        save_path = os.path.join(
+            args.model_dir, "metrics_val_{}.json".format(args.restore_file))
+        utils.save_dict_to_json(val_metrics, save_path)
+
+    if args.testSet == "True":
+        confus_save_path = os.path.join(
+            args.model_dir, "confus_f1_test_{}.json".format(args.restore_file))
+        test_metrics = evaluate(model, loss_fn, test_dl, metrics, params, 'Test', confus_save_path, args)
+        save_path = os.path.join(
+            args.model_dir, "metrics_test_{}.json".format(args.restore_file))
+        utils.save_dict_to_json(test_metrics, save_path)
