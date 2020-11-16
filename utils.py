@@ -2,10 +2,28 @@ import json
 import logging
 import os
 import shutil
-import numpy as np
-
 import torch
+import torchvision.models as models
 from sklearn import metrics as sklearn_metrics
+
+model_mapping = {
+    'alexnet': models.alexnet(pretrained=True), # fast, used for debugging
+    'resnet': models.resnet18(pretrained=True),
+    'vgg16': models.vgg16(pretrained=True)
+}
+
+
+def get_num_outputs(args):
+    if args.net == 'vgg16' or args.net == 'alexnet':
+        return model_mapping[args.net].classifier[6].out_features
+    else:
+        return model_mapping[args.net].fc.out_features
+
+
+def get_model(args):
+    if args.net in model_mapping:
+        return model_mapping[args.net]
+    return None
 
 
 def f1_metrics(outputs, labels):
@@ -32,7 +50,7 @@ class Params():
     def save(self, json_path):
         with open(json_path, 'w') as f:
             json.dump(self.__dict__, f, indent=4)
-            
+
     def update(self, json_path):
         """Loads parameters from json file"""
         with open(json_path) as f:
@@ -47,7 +65,7 @@ class Params():
 
 class RunningAverage():
     """A simple class that maintains the running average of a quantity
-    
+
     Example:
     ```
     loss_avg = RunningAverage()
@@ -56,18 +74,19 @@ class RunningAverage():
     loss_avg() = 3
     ```
     """
+
     def __init__(self):
         self.steps = 0
         self.total = 0
-    
+
     def update(self, val):
         self.total += val
         self.steps += 1
-    
+
     def __call__(self):
-        return self.total/float(self.steps)
-        
-    
+        return self.total / float(self.steps)
+
+
 def set_logger(log_path):
     """Set the logger to log info in terminal and file `log_path`.
 
@@ -140,7 +159,7 @@ def load_checkpoint(checkpoint, model, optimizer=None):
         optimizer: (torch.optim) optional: resume optimizer from checkpoint
     """
     if not os.path.exists(checkpoint):
-        raise("File doesn't exist {}".format(checkpoint))
+        raise ("File doesn't exist {}".format(checkpoint))
     checkpoint = torch.load(checkpoint)
     model.load_state_dict(checkpoint['state_dict'])
 

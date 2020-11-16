@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import utils
-import model.cnn as net
+import model.custom_alexnet as net
 import model.data_loader as data_loader
 import torchvision.models as models
 import model.regression_adopted_cnn as regression_adopted_cnn

@@ -8,16 +8,19 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import utils
-import model.cnn as net
+import loss_and_metrics
 import model.data_loader as data_loader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='just_splitted/multiclass',
                     help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='experiments/custom_alexnet',
+parser.add_argument('--model_dir', default='experiments/example_trans_learning',
+                    help="Directory containing params.json")
+parser.add_argument('--net',
                     help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
+
 
 def evaluate(model, loss_fn, dataloader, metrics, params):
     """Evaluate the model on `num_steps` batches.
@@ -36,8 +39,6 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
 
     # summary for current eval loop
     summ = []
-
-    tp_fp_fn = [[0, 0, 0] for _ in range(params.num_classes)]
 
     # compute metrics over the dataset
     for data_batch, labels_batch in dataloader:
@@ -103,10 +104,10 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    model = utils.get_model(args, params)
 
-    loss_fn = net.loss_fn
-    metrics = net.metrics
+    loss_fn = loss_and_metrics.loss_fn
+    metrics = loss_and_metrics.metrics
 
     logging.info("Starting evaluation")
 
