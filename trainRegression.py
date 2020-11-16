@@ -18,8 +18,6 @@ import regression_loss_and_metrics
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_dir', default='experiments/regression/example_trans_learning',
                     help="Directory containing params.json")
-parser.add_argument('--net',
-                    help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
@@ -186,7 +184,7 @@ if __name__ == '__main__':
 
     logging.info("- done.")
 
-    # model selected is based on args.net
+    # model selected is based on params.net
     model = get_desired_model(params)
 
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)

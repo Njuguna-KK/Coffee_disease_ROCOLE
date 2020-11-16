@@ -18,8 +18,6 @@ parser.add_argument('--model_dir',
                     help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
-parser.add_argument('--isRegression',
-                    help="Which task to use")
 parser.add_argument('--testSet', default='False',
                     help="Indicate whether we should get the metrics for the test set.")
 parser.add_argument('--trainAndVal', default='True',
@@ -27,10 +25,10 @@ parser.add_argument('--trainAndVal', default='True',
 
 
 def get_model_loss_metrics(args, params):
-    if args.isRegression == 'True':
+    if 'regression' in args.model_dir:
         model = regression_cnn.Regression_Adopted_NN(params).cuda() if params.cuda else regression_cnn.Regression_Adopted_NN(params)
         loss_fn = regression_loss_and_metrics.regression_loss_fn
-        metrics = regression_loss_and_metrics.metrics
+        metrics = regression_loss_and_metrics.regression_metrics
         return model, loss_fn, metrics
     else:
         model = utils.get_desired_model(params)
@@ -47,9 +45,8 @@ def compute_and_save_f1(saved_outputs, saved_labels, file):
     text_file.close()
 
 def process_output(args, output_batch):
-    if args.isRegression != 'True':
-        res = np.argmax(output_batch, axis=1)
-        return res
+    if 'regression' not in args.model_dir:
+        return np.argmax(output_batch, axis=1)
     return np.floor(output_batch + 0.5).flatten()
 
 
@@ -112,6 +109,14 @@ def evaluate(model, loss_fn, dataloader, metrics, params, which_set, file, args)
     return metrics_name
 
 
+def get_data_dir():
+    if 'regression' in args.model_dir:
+        return 'regression/multiclass'
+    if 'six_classes' in args.model_dir:
+        return 'just_splitted/multiclass'
+    if 'three_classes' in args.model_dir:
+        return 'three_classes/multiclass'
+
 if __name__ == '__main__':
     """
         Evaluate the model on the train, validation, and test set.
@@ -138,7 +143,7 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # fetch dataloaders
-    data_dir = 'just_splitted/multiclass' if 'six_classes' in args.model_dir else 'three_classes/multiclass'
+    data_dir = get_data_dir()
     dataloaders = data_loader.fetch_dataloader(['train', 'val', 'test'], data_dir, params)
     train_dl = dataloaders['train']
     val_dl = dataloaders['val']
