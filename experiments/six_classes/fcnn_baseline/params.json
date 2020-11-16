@@ -1,5 +1,5 @@
 {
-    "num_classes": 3,
+    "num_classes": 6,
     "img_dimension": 64,
     "first_hidden_size": 3000,
     "second_hidden_size": 1000,

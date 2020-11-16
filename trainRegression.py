@@ -24,8 +24,8 @@ parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
 
-def get_desired_model(args, params):
-    return regression_cnn.Regression_Adopted_NN(args, params).cuda() if params.cuda else regression_cnn.Regression_Adopted_NN(args, params)
+def get_desired_model(params):
+    return regression_cnn.Regression_Adopted_NN(params).cuda() if params.cuda else regression_cnn.Regression_Adopted_NN(params)
 
 def train(model, optimizer, loss_fn, dataloader, metrics, params):
     """Train the model on `num_steps` batches
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # model selected is based on args.net
-    model = get_desired_model(args, params)
+    model = get_desired_model(params)
 
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 

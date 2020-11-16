@@ -20,18 +20,16 @@ import model.regular_neural_net as nn
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_dir', default='experiments/six_classes/example_trans_learning',
                     help="Directory containing params.json")
-parser.add_argument('--net', default='alexnet',
-                    help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
 
-def get_desired_model(args, params):
-    if args.net == 'fcnn':
+def get_desired_model(params):
+    if params.net == 'fcnn':
         return nn.Net(params).cuda() if params.cuda else nn.Net(params)
-    if args.net == 'custom':
+    if params.net == 'custom':
         return custom_alexnet.Net(params).cuda() if params.cuda else custom_alexnet.Net(params)
-    return tr_cnn.Net(args, params).cuda() if params.cuda else tr_cnn.Net(args, params)
+    return tr_cnn.Net(params).cuda() if params.cuda else tr_cnn.Net(params)
 
 def train(model, optimizer, loss_fn, dataloader, metrics, params):
     """Train the model on `num_steps` batches
@@ -191,8 +189,8 @@ if __name__ == '__main__':
 
     logging.info("- done.")
 
-    # model selected is based on args.net
-    model = get_desired_model(args, params)
+    # model selected is based on params.net
+    model = get_desired_model(params)
 
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
