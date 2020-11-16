@@ -13,9 +13,6 @@ import utils
 import model.data_loader as data_loader
 from evaluate import evaluate
 import loss_and_metrics
-import model.transfer_learning as tr_cnn
-import model.custom_alexnet as custom_alexnet
-import model.regular_neural_net as nn
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_dir', default='experiments/six_classes/example_trans_learning',
@@ -24,12 +21,6 @@ parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
 
-def get_desired_model(params):
-    if params.net == 'fcnn':
-        return nn.Net(params).cuda() if params.cuda else nn.Net(params)
-    if params.net == 'custom':
-        return custom_alexnet.Net(params).cuda() if params.cuda else custom_alexnet.Net(params)
-    return tr_cnn.Net(params).cuda() if params.cuda else tr_cnn.Net(params)
 
 def train(model, optimizer, loss_fn, dataloader, metrics, params):
     """Train the model on `num_steps` batches
@@ -190,7 +181,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # model selected is based on params.net
-    model = get_desired_model(params)
+    model = utils.get_desired_model(params)
 
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
