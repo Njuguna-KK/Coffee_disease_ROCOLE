@@ -9,5 +9,5 @@
     "save_summary_steps": 20,
     "num_workers": 0,
     "dropout_rate": 0.0,
-    "net": "vgg16"
+    "net": "mobilenet"
 }

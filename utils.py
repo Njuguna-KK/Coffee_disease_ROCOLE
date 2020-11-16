@@ -10,15 +10,17 @@ import model.custom_alexnet as custom_alexnet
 import model.regular_neural_net as nn
 
 model_mapping = {
-    'alexnet': models.alexnet(pretrained=True), # fast, used for debugging
+    'alexnet': models.alexnet(pretrained=True),
     'resnet': models.resnet18(pretrained=True),
-    'vgg16': models.vgg16(pretrained=True)
+    'mobilenet': models.mobilenet_v2(pretrained=True)
 }
 
 
 def get_num_outputs(args):
-    if args.net == 'vgg16' or args.net == 'alexnet':
+    if args.net == 'alexnet':
         return model_mapping[args.net].classifier[6].out_features
+    elif args.net == 'mobilenet':
+        return model_mapping[args.net].classifier[1].out_features
     else:
         return model_mapping[args.net].fc.out_features
 
