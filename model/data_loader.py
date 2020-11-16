@@ -103,9 +103,14 @@ def fetch_dataloader(types, data_dir, params):
             if split == 'train':
                 train_dataset = LeafDataset(path, train_transformer)
                 weighted_sampler = get_batched_weighted_sampler(params, train_dataset)
-                dl = DataLoader(train_dataset,
+                dl_orig = DataLoader(train_dataset,
                                         num_workers=params.num_workers, batch_size=params.batch_size, shuffle=True,
-                                        pin_memory=params.cuda)# batch_sampler=weighted_sampler)
+                                        pin_memory=params.cuda)
+                dl_class_weighed = DataLoader(train_dataset,
+                                    num_workers=params.num_workers,
+                                    pin_memory=params.cuda, batch_sampler=weighted_sampler)
+                is_weighed = params.weighed_sampling if hasattr(params, 'weighed_sampling') else False
+                dl = dl_class_weighed if is_weighed else dl_orig
             else:
                 dl = DataLoader(LeafDataset(path, eval_transformer), batch_size=params.batch_size, shuffle=False,
                                 num_workers=params.num_workers,
