@@ -5,6 +5,9 @@ import shutil
 import torch
 import torchvision.models as models
 from sklearn import metrics as sklearn_metrics
+import model.transfer_learning as tr_cnn
+import model.custom_alexnet as custom_alexnet
+import model.regular_neural_net as nn
 
 model_mapping = {
     'alexnet': models.alexnet(pretrained=True), # fast, used for debugging
@@ -19,6 +22,12 @@ def get_num_outputs(args):
     else:
         return model_mapping[args.net].fc.out_features
 
+def get_desired_model(params):
+    if params.net == 'fcnn':
+        return nn.Net(params).cuda() if params.cuda else nn.Net(params)
+    if params.net == 'custom':
+        return custom_alexnet.Net(params).cuda() if params.cuda else custom_alexnet.Net(params)
+    return tr_cnn.Net(params).cuda() if params.cuda else tr_cnn.Net(params)
 
 def get_model(args):
     if args.net in model_mapping:

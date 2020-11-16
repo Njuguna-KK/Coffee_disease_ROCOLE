@@ -8,42 +8,35 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import utils
-import model.custom_alexnet as net
 import model.data_loader as data_loader
-import torchvision.models as models
-import model.regression_adopted_cnn as regression_adopted_cnn
-import model.regular_neural_net as regular_nn
+import regression_loss_and_metrics
+import loss_and_metrics
+import model.regression_adopted_cnn as regression_cnn
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir',
-                    help="Directory containing the dataset")
 parser.add_argument('--model_dir',
                     help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
-parser.add_argument('--net',
-                    help="Which neural net to use")
-parser.add_argument('--testSet', default=False,
+parser.add_argument('--isRegression',
+                    help="Which task to use")
+parser.add_argument('--testSet', default='False',
                     help="Indicate whether we should get the metrics for the test set.")
-parser.add_argument('--trainAndVal', default=True,
+parser.add_argument('--trainAndVal', default='True',
                     help="Indicate whether we should get the metrics for the test set.")
-
-pretrained_map = {
-    "alexnet": models.alexnet(pretrained=True),
-    "resnet": models.resnet18(pretrained=True),
-    "resnext50":  models.resnext50_32x4d(pretrained=True),
-}
 
 
 def get_model_loss_metrics(args, params):
-    if args.net == 'regression':
-        return regression_adopted_cnn.Regression_Adopted_NN(params), regression_adopted_cnn.loss_fn, regression_adopted_cnn.metrics
-    if args.net == 'custom':
-        return net.Net(params), net.loss_fn, net.metrics
-    if args.net == 'regular':
-        return regular_nn.Net(params), regular_nn.loss_fn, regular_nn.metrics
+    if args.isRegression == 'True':
+        model = regression_cnn.Regression_Adopted_NN(params).cuda() if params.cuda else regression_cnn.Regression_Adopted_NN(params)
+        loss_fn = regression_loss_and_metrics.regression_loss_fn
+        metrics = regression_loss_and_metrics.metrics
+        return model, loss_fn, metrics
     else:
-        return pretrained_map[args.net], net.loss_fn, net.metrics
+        model = utils.get_desired_model(params)
+        loss_fn = loss_and_metrics.loss_fn
+        metrics = loss_and_metrics.metrics
+        return model, loss_fn, metrics
 
 
 def compute_and_save_f1(saved_outputs, saved_labels, file):
@@ -54,12 +47,10 @@ def compute_and_save_f1(saved_outputs, saved_labels, file):
     text_file.close()
 
 def process_output(args, output_batch):
-    if args.net != 'regression':
+    if args.isRegression != 'True':
         res = np.argmax(output_batch, axis=1)
         return res
     return np.floor(output_batch + 0.5).flatten()
-
-
 
 
 def evaluate(model, loss_fn, dataloader, metrics, params, which_set, file, args):
@@ -147,7 +138,8 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(['train', 'val', 'test'], args.data_dir, params)
+    data_dir = 'just_splitted/multiclass' if 'six_classes' in args.model_dir else 'three_classes/multiclass'
+    dataloaders = data_loader.fetch_dataloader(['train', 'val', 'test'], data_dir, params)
     train_dl = dataloaders['train']
     val_dl = dataloaders['val']
     test_dl = dataloaders['test']
@@ -156,7 +148,6 @@ if __name__ == '__main__':
 
     # Define the model
     model, loss_fn, metrics = get_model_loss_metrics(args, params)
-
 
     logging.info("Starting evaluation and calculation of F1 Scores")
 
