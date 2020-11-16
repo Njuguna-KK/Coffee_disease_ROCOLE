@@ -187,7 +187,8 @@ if __name__ == '__main__':
     # model selected is based on params.net
     model = get_desired_model(params)
 
-    optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
+    w_decay = params.weight_decay if hasattr(params, 'weight_decay') else 0.0
+    optimizer = optim.Adam(model.parameters(), lr=params.learning_rate, weight_decay=w_decay)
 
     # fetch loss function and metrics
     loss_fn = regression_loss_and_metrics.regression_loss_fn
