@@ -3,7 +3,6 @@
 import argparse
 import logging
 import os
-import torchvision.models as models
 import numpy as np
 import torch
 import torch.optim as optim
@@ -11,22 +10,28 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 import utils
-import model.regular_neural_net as regular_nn
-import model.cnn as cnn
 import model.data_loader as data_loader
 from evaluate import evaluate
+import loss_and_metrics
+import model.transfer_learning as tr_cnn
+import model.custom_alexnet as custom_alexnet
+import model.regular_neural_net as nn
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='just_splitted/multiclass',
-                    help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='experiments/custom_alexnet',
+parser.add_argument('--model_dir', default='experiments/six_classes/example_trans_learning',
                     help="Directory containing params.json")
-parser.add_argument('--param_name', default='cnn',
-                    help="Which params.jon file to use")
+parser.add_argument('--net', default='alexnet',
+                    help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
 
+def get_desired_model(args, params):
+    if args.net == 'fcnn':
+        return nn.Net(params).cuda() if params.cuda else nn.Net(params)
+    if args.net == 'custom':
+        return custom_alexnet.Net(params).cuda() if params.cuda else custom_alexnet.Net(params)
+    return tr_cnn.Net(args, params).cuda() if params.cuda else tr_cnn.Net(args, params)
 
 def train(model, optimizer, loss_fn, dataloader, metrics, params):
     """Train the model on `num_steps` batches
@@ -71,17 +76,11 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             optimizer.step()
 
             # Evaluate summaries only once in a while
-            if i % params.save_summary_steps == 2:
+            if i % params.save_summary_steps == 0:
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
                 output_batch = output_batch.data.cpu().numpy()
                 labels_batch = labels_batch.data.cpu().numpy()
-                is0 = np.sum(np.where(labels_batch == 0, 1, 0))
-                is1 = np.sum(np.where(labels_batch == 1, 1, 0))
-                is2 = np.sum(np.where(labels_batch == 2, 1, 0))
-                is3 = np.sum(np.where(labels_batch == 3, 1, 0))
-                is4 = np.sum(np.where(labels_batch == 4, 1, 0))
-                is5 = np.sum(np.where(labels_batch == 5, 1, 0))
-                print(is0, is1, is2, is3, is4, is5)
+
                 # compute all metrics on this batch
                 summary_batch = {metric: metrics[metric](output_batch, labels_batch)
                                  for metric in metrics}
@@ -124,7 +123,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Restoring parameters from {}".format(restore_path))
         utils.load_checkpoint(restore_path, model, optimizer)
 
-    best_val_acc = 0.0
+    best_val_macro_f1 = 0.0
 
     for epoch in range(params.num_epochs):
         # Run one epoch
@@ -136,8 +135,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params)
 
-        val_acc = val_metrics['accuracy']
-        is_best = val_acc >= best_val_acc
+        val_macro_f1 = val_metrics['macro f1']
+        is_best = val_macro_f1 >= best_val_macro_f1
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -148,8 +147,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
         # If best_eval, best_save_path
         if is_best:
-            logging.info("- Found new best accuracy")
-            best_val_acc = val_acc
+            logging.info("- Found new best macro f1")
+            best_val_macro_f1 = val_macro_f1
 
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(
@@ -172,7 +171,7 @@ if __name__ == '__main__':
 
     # use GPU if available
     params.cuda = torch.cuda.is_available()
-
+    data_dir = 'just_splitted/multiclass' if 'six_classes' in args.model_dir else 'three_classes/multiclass'
     # Set the random seed for reproducible experiments
     torch.manual_seed(230)
     if params.cuda:
@@ -186,24 +185,20 @@ if __name__ == '__main__':
 
     # fetch dataloaders
     dataloaders = data_loader.fetch_dataloader(
-        ['train', 'val'], args.data_dir, params)
+        ['train', 'val'], data_dir, params)
     train_dl = dataloaders['train']
     val_dl = dataloaders['val']
 
     logging.info("- done.")
 
-    net = regular_nn if args.param_name == "nn" else cnn
+    # model selected is based on args.net
+    model = get_desired_model(args, params)
 
-    # Use later, to customize AlexNet
-    # model = net.Net(params).cuda() if params.cuda else net.Net(params)
-    model = models.alexnet()
-    # model = models.resnet18(pretrained=True)
-    # model = models.resnext50_32x4d(pretrained=True)
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
-    loss_fn = net.loss_fn
-    metrics = net.metrics
+    loss_fn = loss_and_metrics.loss_fn
+    metrics = loss_and_metrics.metrics
 
     # Train the model
     logging.info("Starting training for {} epoch(s)".format(params.num_epochs))

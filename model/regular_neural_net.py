@@ -1,8 +1,5 @@
-"""Defines the neural network, losss function and metrics"""
-
-import numpy as np
 import torch.nn as nn
-import torch
+
 
 class Net(nn.Module):
     def __init__(self, params):
@@ -29,6 +26,7 @@ class Net(nn.Module):
         self.linear3 = nn.Linear(self.second_hidden_size, self.third_hidden_size)
         self.relu = nn.ReLU()
         self.linear4 = nn.Linear(self.third_hidden_size, self.num_classes)
+        self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
         num_examples = x.shape[0]
@@ -40,31 +38,5 @@ class Net(nn.Module):
         out = self.linear3(out)
         out = self.relu(out)
         out = self.linear4(out)
-
+        out = self.softmax(out)
         return out
-
-def loss_fn(outputs, labels):
-    """
-    This criterion combines LogSoftmax and NLLLoss in one single class.
-    """
-    criterion = nn.CrossEntropyLoss()
-    return criterion(outputs, labels)
-
-def accuracy(outputs, labels):
-    """
-    Compute the accuracy, given the outputs and labels for all images.
-
-    Args:
-        outputs: (np.ndarray) dimension batch_size x 6 - log softmax output of the model
-        labels: (np.ndarray) dimension batch_size, where each element is a value in [0, 1, 2, 3, 4, 5]
-
-    Returns: (float) accuracy in [0,1]
-    """
-    outputs = np.argmax(outputs, axis=1)
-    return np.sum(outputs==labels)/float(labels.size)
-
-# maintain all metrics required in this dictionary- these are used in the training and evaluation loops
-metrics = {
-    'accuracy': accuracy,
-    # could add more metrics such as accuracy for each token type
-}

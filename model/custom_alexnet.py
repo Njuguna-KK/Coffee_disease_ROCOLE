@@ -59,6 +59,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(1332, 600)
         self.fc2 = nn.Linear(600, 200)
         self.fc3 = nn.Linear(200, 6)
+        self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, s):
         """
@@ -99,44 +100,6 @@ class Net(nn.Module):
         s = F.dropout(F.relu(self.fc2(s)),
                       p=self.dropout_rate, training=self.training)
         s = self.fc3(s)
+        s = self.softmax(s)
 
         return s
-
-
-def loss_fn(outputs, labels):
-    """
-    Compute the cross entropy loss given outputs and labels.
-
-    Args:
-        outputs: (Variable) dimension batch_size x 6 - output of the model
-        labels: (Variable) dimension batch_size, where each element is a value in [0, 1, 2, 3, 4, 5]
-
-    Returns:
-        loss (Variable): cross entropy loss for all images in the batch
-
-    Note: you may use a standard loss function from http://pytorch.org/docs/master/nn.html#loss-functions. This example
-          demonstrates how you can easily define a custom loss function.
-    """
-    criterion = nn.CrossEntropyLoss()
-    return criterion(outputs, labels)
-
-
-def accuracy(outputs, labels):
-    """
-    Compute the accuracy, given the outputs and labels for all images.
-
-    Args:
-        outputs: (np.ndarray) dimension batch_size x 6 - log softmax output of the model
-        labels: (np.ndarray) dimension batch_size, where each element is a value in [0, 1, 2, 3, 4, 5]
-
-    Returns: (float) accuracy in [0,1]
-    """
-    outputs = np.argmax(outputs, axis=1)
-    return np.sum(outputs == labels) / float(labels.size)
-
-
-# maintain all metrics required in this dictionary- these are used in the training and evaluation loops
-metrics = {
-    'accuracy': accuracy
-    # could add more metrics such as accuracy for each token type
-}

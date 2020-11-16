@@ -3,7 +3,6 @@
 import argparse
 import logging
 import os
-import torchvision.models as models
 import numpy as np
 import torch
 import torch.optim as optim
@@ -11,19 +10,22 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 import utils
-import model.regression_adopted_cnn as cnn
+import model.regression_adopted_cnn as regression_cnn
 import model.data_loader as data_loader
 from evaluate import evaluate
+import regression_loss_and_metrics
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='regression/multiclass',
-                    help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='random',
+parser.add_argument('--model_dir', default='experiments/regression/example_trans_learning',
+                    help="Directory containing params.json")
+parser.add_argument('--net',
                     help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
 
+def get_desired_model(args, params):
+    return regression_cnn.Regression_Adopted_NN(args, params).cuda() if params.cuda else regression_cnn.Regression_Adopted_NN(args, params)
 
 def train(model, optimizer, loss_fn, dataloader, metrics, params):
     """Train the model on `num_steps` batches
@@ -68,7 +70,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             optimizer.step()
 
             # Evaluate summaries only once in a while
-            if i % params.save_summary_steps == 2:
+            if i % params.save_summary_steps == 0:
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
                 output_batch = output_batch.data.cpu().numpy()
                 labels_batch = labels_batch.data.cpu().numpy()
@@ -115,7 +117,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Restoring parameters from {}".format(restore_path))
         utils.load_checkpoint(restore_path, model, optimizer)
 
-    best_val_acc = 0.0
+    best_val_macro_f1 = 0.0
 
     for epoch in range(params.num_epochs):
         # Run one epoch
@@ -127,8 +129,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params)
 
-        val_acc = val_metrics['accuracy']
-        is_best = val_acc >= best_val_acc
+        val_macro_f1 = val_metrics['macro f1']
+        is_best = val_macro_f1 >= best_val_macro_f1
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -139,8 +141,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
         # If best_eval, best_save_path
         if is_best:
-            logging.info("- Found new best accuracy")
-            best_val_acc = val_acc
+            logging.info("- Found new best macro f1")
+            best_val_macro_f1 = val_macro_f1
 
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(
@@ -176,22 +178,22 @@ if __name__ == '__main__':
     logging.info("Loading the datasets...")
 
     # fetch dataloaders
+    data_dir = 'regression/multiclass'
     dataloaders = data_loader.fetch_dataloader(
-        ['train', 'val'], args.data_dir, params)
+        ['train', 'val'], data_dir, params)
     train_dl = dataloaders['train']
     val_dl = dataloaders['val']
 
     logging.info("- done.")
 
-
-    # Use later, to customize AlexNet
-    model = cnn.Regression_Adopted_NN(params).cuda() if params.cuda else cnn.Regression_Adopted_NN(params)
+    # model selected is based on args.net
+    model = get_desired_model(args, params)
 
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
-    loss_fn = cnn.loss_fn
-    metrics = cnn.metrics
+    loss_fn = regression_loss_and_metrics.regression_loss_fn
+    metrics = regression_loss_and_metrics.metrics
 
     # Train the model
     logging.info("Starting training for {} epoch(s)".format(params.num_epochs))

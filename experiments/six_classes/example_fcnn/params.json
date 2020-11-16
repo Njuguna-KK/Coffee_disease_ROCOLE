@@ -1,0 +1,14 @@
+{
+    "num_classes": 6,
+    "img_dimension": 64,
+    "first_hidden_size": 3000,
+    "second_hidden_size": 1000,
+    "third_hidden_size": 200,
+    "depth": 3,
+
+    "batch_size": 32,
+    "num_workers": 0,
+    "learning_rate": 1e-4,
+    "num_epochs": 30,
+    "save_summary_steps": 100
+}
