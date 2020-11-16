@@ -16,7 +16,7 @@ from evaluate import evaluate
 import regression_loss_and_metrics
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_dir', default='experiments/regression/example_trans_learning',
+parser.add_argument('--model_dir',
                     help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
@@ -191,7 +191,7 @@ if __name__ == '__main__':
 
     # fetch loss function and metrics
     loss_fn = regression_loss_and_metrics.regression_loss_fn
-    metrics = regression_loss_and_metrics.metrics
+    metrics = regression_loss_and_metrics.regression_metrics
 
     # Train the model
     logging.info("Starting training for {} epoch(s)".format(params.num_epochs))
