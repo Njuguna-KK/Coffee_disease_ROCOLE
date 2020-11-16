@@ -1,2 +1,0 @@
-1) Data is normalized using 'transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])'
-2) This is for the six-class classification task with weight decay of 1e-4
