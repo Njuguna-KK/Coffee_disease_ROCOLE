@@ -5,5 +5,4 @@ tabulate
 tqdm
 torchvision
 openpyxl
-shutil
 sklearn
